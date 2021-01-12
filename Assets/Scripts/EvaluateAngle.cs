@@ -8,21 +8,21 @@ using UnityEngine.UI;
     public class EvaluateAngle : MonoBehaviour
     {
         public static int[,] OP_anglePoints = new int[,] { {1, 2, 3}, // 0 Right shoulder
-                                                            {2, 3, 4}, // 1 Right elbow
-                                                            {1, 5, 6}, // 2 left shoulder
-                                                            {5, 6, 7}, // 3 Left elbow
-                                                            {1, 8, 9}, // 4 Bust 1 (right)
-                                                            {1, 8, 12}, // 5 Bust 2 (left)
+                                                            // {2, 3, 4}, 1 Right elbow
+                                                            {1, 5, 6},  // 2 left shoulder
+                                                            //{5, 6, 7}, 3 Left elbow
+                                                            // {1, 8, 9}, 4 Bust 1 (right)
+                                                            // {1, 8, 12}, 5 Bust 2 (left)
                                                             {8, 9, 10}, // 6 Hips right
                                                             {8, 12, 13}, // 7 Hips left
                                                             {9, 10, 11}, // 8 Knee right
                                                             {12, 13, 14} // 9 Knee left
                                                         };
-        private static float[] OP_Cos = new float[10];
-        private static float[] OP_Sin = new float[10];
-        private static float[] Ref_Cos = new float[10];
-        private static float[] Ref_Sin = new float[10];
-        public static float[] PointScore = new float[10];
+        private static float[] OP_Cos = new float[6];
+        private static float[] OP_Sin = new float[6];
+        private static float[] Ref_Cos = new float[6];
+        private static float[] Ref_Sin = new float[6];
+        public static float[,] PointScore = new float[6,2];
         public static  int counter = 0;
         public static float sumScore = 0;
         public static float average;
@@ -33,11 +33,11 @@ using UnityEngine.UI;
             sumScore = 0;
             average = 0;
             //Clear all static data
-            OP_Cos = new float[10];
-            OP_Sin = new float[10];
-            Ref_Cos = new float[10];
-            Ref_Sin = new float[10];
-            PointScore = new float[10];
+            OP_Cos = new float[6];
+            OP_Sin = new float[6];
+            Ref_Cos = new float[6];
+            Ref_Sin = new float[6];
+            PointScore = new float[6,2];
 
         }
 
@@ -60,7 +60,7 @@ using UnityEngine.UI;
 
         public static void Compute_OP_PseudoAngle(List<RectTransform> poseJoints)
         {
-             for(int i = 0; i < 10; i++)
+             for(int i = 0; i < 6 ; i++)
              {
                 RectTransform joint1 = poseJoints[OP_anglePoints[i,0]];
                 RectTransform joint2 = poseJoints[OP_anglePoints[i,1]];
@@ -82,7 +82,7 @@ using UnityEngine.UI;
         }
         public static void Compute_Model_PseudoAngle(List<Transform> poseJoints)
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 6 ; i++)
             {
                 Transform joint1 = poseJoints[OP_anglePoints[i, 0]];
                 Transform joint2 = poseJoints[OP_anglePoints[i, 1]];
@@ -108,17 +108,23 @@ using UnityEngine.UI;
         {
             float score = 0f;
             int n = 0;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 6 ; i++)
             {
                 if (!((OP_Cos[i]==0) && (OP_Sin[i]==0)))
                 {
-                    PointScore[i] = (1 - Mathf.Abs((OP_Cos[i] - Ref_Cos[i] + OP_Sin[i] - Ref_Sin[i]) / 2f));
-                    score += PointScore[i];
+                    PointScore[i,0] = (1 - Mathf.Abs((OP_Cos[i] - Ref_Cos[i] + OP_Sin[i] - Ref_Sin[i]) / 2f));
+                    if (OP_Cos[i] - Ref_Cos[i] > 0){
+                        PointScore[i,1] = 0;
+                    } else {
+                        PointScore[i,1] = 1;
+                    }
+                    score += PointScore[i,0];
                     n += 1;
-            }
+                }
                 else
                     {
-                        PointScore[i] = 0;
+                        PointScore[i,0] = 0;
+                        PointScore[i,1] = 0;
                     }
             }
 
