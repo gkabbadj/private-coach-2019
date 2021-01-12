@@ -19,9 +19,9 @@ public class ModelToBody25 : MonoBehaviour
     public static string [] messages = {"Error on the right shoulder : ",
     "Error on the left shoulder : ", "Error on the right hip : ",
     "Error on the left hip : ", "Error on the right knee : ", "Error on the left knee : "};
-    public static string [,] advices = {["Raise your shoulder", "Lower your shoulder"], ["Raise your shoulder", "Lower your shoulder"],
-    ["Get your torso up", "Get your torso down"], ["Get your torso up", "Get your torso down"], ["Get your thighs up", "Get your thighs down"], [
-    "Get your thighs up", "Get your thighs down"]};
+    public static string [,] advices = {{"Raise your shoulder", "Lower your shoulder"}, {"Raise your shoulder", "Lower your shoulder"},
+    {"Get your torso up", "Get your torso down"}, {"Get your torso up", "Get your torso down"}, {"Get your thighs up", "Get your thighs down"}, {
+    "Get your thighs up", "Get your thighs down"}};
     Stopwatch sw1 = new Stopwatch();
     Stopwatch sw2 = new Stopwatch();
     Stopwatch sw3 = new Stopwatch();
@@ -81,6 +81,9 @@ public class ModelToBody25 : MonoBehaviour
 
     private void Update()
     {
+        if (renderballs[4].enabled == false){
+            UnityEngine.Debug.Log("right knee undetected");
+        }
         for (int i = 0; i < 6; i++) {
             if (EvaluateAngle.PointScore[i,0] == 0)
             {
