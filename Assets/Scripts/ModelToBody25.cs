@@ -5,10 +5,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ModelToBody25 : MonoBehaviour
 {
     //--------------------- PILS ------------------------------//
+    public Text error_textbox; //en écriture, pour afficher les erreurs
+    public Text isVisible_textBox; //que en lecture, pour voir si le corps est visible
     public List<Transform> poseStandard;
     private bool conditionGUI;
     private bool showLabel;
@@ -73,58 +76,47 @@ public class ModelToBody25 : MonoBehaviour
         }
     }
 
-    private void OnGUI()
-    {
-        if (conditionGUI) {
-            GUI.color = Color.red;
-            GUI.Label(new Rect(550, 300, 150, 100), MessageToDisplay);
-            }
-    }
-
     private void Update()
     {
-        globalCounter += 1;
-        for (int i = 0; i < 6; i++) {
-            if (EvaluateAngle.PointScore[i,0] == 0)
-            {
-                renderballs[i].enabled = true;
-                renderballs[i].material.color = Color.gray;
+        if (isVisible_textBox.text != "full body not visible"){
+            if (renderballs[4].enabled == false){
+                UnityEngine.Debug.Log("right knee undetected");
             }
-            else if (EvaluateAngle.PointScore[i,0] < 0.7)
-            {
-                //if (counter[i] == 0) {
-                //    callsw(i).Start();
-                //}
-                errorCounter[i, globalCounter%100] = 1;
-                //counter[i] = callsw(i).ElapsedMilliseconds;
-                if (written[i] >= 60) {
-                    if (written[i] == 0) {
-                        written[i] = i+1;
-                        if (written.Max() == written[i]) {
-                            conditionGUI = true;
-                            MessageToDisplay = messages[i] + advices [i, (int)EvaluateAngle.PointScore[i,1]];
-                            UnityEngine.Debug.Log(MessageToDisplay);
-                        } else {
-                            written[i] = 0;
+            for (int i = 0; i < 6; i++) {
+                if (EvaluateAngle.PointScore[i,0] == 0)
+                {
+                    renderballs[i].enabled = true;
+                    renderballs[i].material.color = Color.gray;
+                }
+                else if (EvaluateAngle.PointScore[i,0] < 0.7)
+                {
+                    if (counter[i] == 0) {
+                        callsw(i).Start();
+                    }
+                    counter[i] = callsw(i).ElapsedMilliseconds;
+                    if (counter[i] >= 5000) {
+                        if (written[i] == 0) {
+                            written[i] = i;
+                            if (written.Max() == written[i]) {
+                                error_textbox.text = messages[i];
+                                UnityEngine.Debug.Log(messages[i]);
+                            } else {
+                                written[i] = 0;
+                            }
                         }
                     }
-                } else {
-                    conditionGUI = false;
-                    written[i] = 0;
+                    renderballs[i].enabled = true;
+                    renderballs[i].material.color = new Color(1 - EvaluateAngle.PointScore[i,0], 0, 0, 1);
                 }
-                renderballs[i].enabled = true;
-                renderballs[i].material.color = new Color(1 - EvaluateAngle.PointScore[i,0], 0, 0, 1);
-            }
-            else
-            {
-                renderballs[i].enabled = false;
-                errorCounter[i, globalCounter%100] = 0;
-                // conditionGUI = false;
-                // callsw(i).Reset();
-                // counter[i] = 0;
-                // written[i] = 0;
-            }   
-        } 
-
+                else
+                {
+                    renderballs[i].enabled = false;
+                    error_textbox.text = "";
+                    callsw(i).Reset();
+                    counter[i] = 0;
+                    written[i] = 0;
+                }   
+            } 
+        }
     }
 }
