@@ -12,6 +12,7 @@ public class ModelToBody25 : MonoBehaviour
     public List<Transform> poseStandard;
     private bool conditionGUI;
     private bool showLabel;
+    private int globalCounter;
     public GameObject ball;
     private GameObject[] Myballs= new GameObject[6];
     private string MessageToDisplay;
@@ -19,9 +20,10 @@ public class ModelToBody25 : MonoBehaviour
     public static string [] messages = {"Error on the right shoulder : ",
     "Error on the left shoulder : ", "Error on the right hip : ",
     "Error on the left hip : ", "Error on the right knee : ", "Error on the left knee : "};
-    public static string [,] advices = {["Raise your shoulder", "Lower your shoulder"], ["Raise your shoulder", "Lower your shoulder"],
-    ["Get your torso up", "Get your torso down"], ["Get your torso up", "Get your torso down"], ["Get your thighs up", "Get your thighs down"], [
-    "Get your thighs up", "Get your thighs down"]};
+    public static string [,] advices = {{"Raise your shoulder", "Lower your shoulder"}, {"Raise your shoulder", "Lower your shoulder"},
+    {"Get your torso up", "Get your torso down"}, {"Get your torso up", "Get your torso down"}, {"Get your thighs up", "Get your thighs down"}, {
+    "Get your thighs up", "Get your thighs down"}};
+    public int [,] errorCounter = new int [6,100];
     Stopwatch sw1 = new Stopwatch();
     Stopwatch sw2 = new Stopwatch();
     Stopwatch sw3 = new Stopwatch();
@@ -35,6 +37,7 @@ public class ModelToBody25 : MonoBehaviour
     private void Awake()
     {
         ball = Resources.Load<GameObject>("Sphere") as GameObject;
+        globalCounter = 0;
         for (int i = 0; i < 6; i++)
         {
                 Myballs[i]=Instantiate(ball, poseStandard[EvaluateAngle.OP_anglePoints[i, 1]].transform);
@@ -75,12 +78,12 @@ public class ModelToBody25 : MonoBehaviour
         if (conditionGUI) {
             GUI.color = Color.red;
             GUI.Label(new Rect(550, 300, 150, 100), MessageToDisplay);
-            Thread.Sleep(1000);
             }
     }
 
     private void Update()
     {
+        globalCounter += 1;
         for (int i = 0; i < 6; i++) {
             if (EvaluateAngle.PointScore[i,0] == 0)
             {
@@ -89,21 +92,25 @@ public class ModelToBody25 : MonoBehaviour
             }
             else if (EvaluateAngle.PointScore[i,0] < 0.7)
             {
-                if (counter[i] == 0) {
-                    callsw(i).Start();
-                }
-                counter[i] = callsw(i).ElapsedMilliseconds;
-                if (counter[i] >= 5000) {
+                //if (counter[i] == 0) {
+                //    callsw(i).Start();
+                //}
+                errorCounter[i, globalCounter%100] = 1;
+                //counter[i] = callsw(i).ElapsedMilliseconds;
+                if (written[i] >= 60) {
                     if (written[i] == 0) {
-                        written[i] = i;
+                        written[i] = i+1;
                         if (written.Max() == written[i]) {
                             conditionGUI = true;
-                            MessageToDisplay = messages[i];
-                            UnityEngine.Debug.Log(messages[i]);
+                            MessageToDisplay = messages[i] + advices [i, (int)EvaluateAngle.PointScore[i,1]];
+                            UnityEngine.Debug.Log(MessageToDisplay);
                         } else {
                             written[i] = 0;
                         }
                     }
+                } else {
+                    conditionGUI = false;
+                    written[i] = 0;
                 }
                 renderballs[i].enabled = true;
                 renderballs[i].material.color = new Color(1 - EvaluateAngle.PointScore[i,0], 0, 0, 1);
@@ -111,10 +118,11 @@ public class ModelToBody25 : MonoBehaviour
             else
             {
                 renderballs[i].enabled = false;
-                conditionGUI = false;
-                callsw(i).Reset();
-                counter[i] = 0;
-                written[i] = 0;
+                errorCounter[i, globalCounter%100] = 0;
+                // conditionGUI = false;
+                // callsw(i).Reset();
+                // counter[i] = 0;
+                // written[i] = 0;
             }   
         } 
 
