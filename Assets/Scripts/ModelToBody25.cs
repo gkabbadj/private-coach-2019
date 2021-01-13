@@ -13,34 +13,24 @@ public class ModelToBody25 : MonoBehaviour
     public Text error_textbox; //en écriture, pour afficher les erreurs
     public Text isVisible_textBox; //que en lecture, pour voir si le corps est visible
     public List<Transform> poseStandard;
-    private bool conditionGUI;
-    private bool showLabel;
     private int globalCounter;
     public GameObject ball;
     private GameObject[] Myballs= new GameObject[6];
-    private string MessageToDisplay;
     private MeshRenderer[] renderballs= new MeshRenderer[6];
     public static string [] messages = {"Error on the right shoulder : ",
     "Error on the left shoulder : ", "Error on the right hip : ",
     "Error on the left hip : ", "Error on the right knee : ", "Error on the left knee : "};
-    public static string [,] advices = {{"Raise your shoulder", "Lower your shoulder"}, {"Raise your shoulder", "Lower your shoulder"},
-    {"Get your torso up", "Get your torso down"}, {"Get your torso up", "Get your torso down"}, {"Get your thighs up", "Get your thighs down"}, {
-    "Get your thighs up", "Get your thighs down"}};
+    public static string [,] advices = {{"levez le bras", "baissez le bras"}, {"levez le bras", "baissez le bras"},
+    {"Descendez sur vos cuisses", "Montez sur vos cuisses"}, {"Descendez sur vos cuisses", "Montez sur vos cuisses"}, {"Montez sur vos cuisses", "Descendez sur vos cuisses"}, 
+    {"Montez sur vos cuisses 1", "Descendez sur vos cuisses 1"}};
     public int [,] errorCounter = new int [6,100];
-    Stopwatch sw1 = new Stopwatch();
-    Stopwatch sw2 = new Stopwatch();
-    Stopwatch sw3 = new Stopwatch();
-    Stopwatch sw4 = new Stopwatch();
-    Stopwatch sw5 = new Stopwatch();
-    Stopwatch sw6 = new Stopwatch();
 
-    private long [] counter = {0,0,0,0,0,0};
     public int [] written = {0,0,0,0,0,0};
     //--------------------- PILS ------------------------------/
     private void Awake()
     {
-        ball = Resources.Load<GameObject>("Sphere") as GameObject;
         globalCounter = 0;
+        ball = Resources.Load<GameObject>("Sphere") as GameObject;
         for (int i = 0; i < 6; i++)
         {
                 Myballs[i]=Instantiate(ball, poseStandard[EvaluateAngle.OP_anglePoints[i, 1]].transform);
@@ -50,73 +40,70 @@ public class ModelToBody25 : MonoBehaviour
         
     }
 
-    private Stopwatch callsw(int index)
-    {
-        Stopwatch sw = new Stopwatch();
-        if (index == 1) {
-            return sw1;
+    private int ratioCol(int [,] tab, int col){
+        //retourne un pourcentage (entier)
+        int sum = 0;
+        for(int i=0;i<tab.GetLength(1);i++){
+            sum += tab[col,i];
         }
-        if (index == 2) {
-            return sw2;
-        }
-        if (index == 3) {
-            return sw3;
-        }
-        if (index == 4) {
-            return sw4;
-        }
-        if (index == 5) {
-            return sw5;
-        }
-        if (index == 6) {
-            return sw6;
-        }
-        else {
-            return sw;
-        }
+        UnityEngine.Debug.Log("RATIO : "+sum.ToString()+"   COL : "+col.ToString());
+        return sum;
     }
 
-    private void Update()
+    private string Update()
     {
+        bool there_is_an_error = false;
+        bool we_refresh = false;
+
         if (isVisible_textBox.text != "full body not visible"){
-            if (renderballs[4].enabled == false){
-                UnityEngine.Debug.Log("right knee undetected");
-            }
+            globalCounter +=1;
+
             for (int i = 0; i < 6; i++) {
-                if (EvaluateAngle.PointScore[i,0] == 0)
+                if (EvaluateAngle.PointScore[i,0] == 0) //cas spécial
                 {
                     renderballs[i].enabled = true;
                     renderballs[i].material.color = Color.gray;
                 }
-                else if (EvaluateAngle.PointScore[i,0] < 0.7)
+                else if (EvaluateAngle.PointScore[i,0] < 0.7) // il y a une erreur
                 {
-                    if (counter[i] == 0) {
-                        callsw(i).Start();
-                    }
-                    counter[i] = callsw(i).ElapsedMilliseconds;
-                    if (counter[i] >= 5000) {
-                        if (written[i] == 0) {
-                            written[i] = i;
-                            if (written.Max() == written[i]) {
-                                error_textbox.text = messages[i];
-                                UnityEngine.Debug.Log(messages[i]);
-                            } else {
-                                written[i] = 0;
+                    there_is_an_error = true;
+
+                    errorCounter[i,globalCounter%errorCounter.GetLength(1)] = 1;
+                    
+                    //mise à jour affichage
+                    if(globalCounter%40==0){
+                        if (ratioCol(errorCounter, i) > 50) {       //>50%
+                            UnityEngine.Debug.Log("in ERROR");
+                            if (written[i] == 0) { //affectation du niveau de priorité
+                                written[i] = i+1;
+                            }
+                            if (written.Max() == written[i]) { //vérification de la priorité
+                                error_textbox.text = messages[i] + advices[i, (int) EvaluateAngle.PointScore[i,1]];
+                                UnityEngine.Debug.Log(EvaluateAngle.PointScore[i,1].ToString());
+                                we_refresh = true;
                             }
                         }
                     }
                     renderballs[i].enabled = true;
                     renderballs[i].material.color = new Color(1 - EvaluateAngle.PointScore[i,0], 0, 0, 1);
                 }
-                else
+                else // cas où il n'y a pas d'erreur
                 {
+                    errorCounter[i,globalCounter%errorCounter.GetLength(1)] = 0;
                     renderballs[i].enabled = false;
-                    error_textbox.text = "";
-                    callsw(i).Reset();
-                    counter[i] = 0;
                     written[i] = 0;
                 }   
+            }
+            if (there_is_an_error == false){
+                error_textbox.text = "";
             } 
+        }
+
+        if (we_refresh){
+            return error_textbox.text;
+        }
+        else{
+            return "";
         }
     }
 }

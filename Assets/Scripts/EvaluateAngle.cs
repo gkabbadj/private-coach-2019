@@ -114,9 +114,9 @@ using UnityEngine.UI;
                 {
                     PointScore[i,0] = (1 - Mathf.Abs((OP_Cos[i] - Ref_Cos[i] + OP_Sin[i] - Ref_Sin[i]) / 2f));
                     if (OP_Cos[i] - Ref_Cos[i] > 0){
-                        PointScore[i,1] = 0;
+                        PointScore[i,1] = 0; //angle utilisateur trop petit/fermé
                     } else {
-                        PointScore[i,1] = 1;
+                        PointScore[i,1] = 1; //angle utilisateur trop grand/ouvert
                     }
                     score += PointScore[i,0];
                     n += 1;
