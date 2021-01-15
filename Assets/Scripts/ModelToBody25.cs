@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Globalization;
 
 public class ModelToBody25 : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public class ModelToBody25 : MonoBehaviour
     {"Descendez sur vos cuisses", "Montez sur vos cuisses"}, {"Descendez sur vos cuisses", "Montez sur vos cuisses"}, {"Montez sur vos cuisses", "Descendez sur vos cuisses"}, 
     {"Montez sur vos cuisses 1", "Descendez sur vos cuisses 1"}};
     public int [,] errorCounter = new int [6,100];
+    public int [,] moyPointScore = new int [6,2]; //pour chaque point : [sum, moy]
 
     public int [] written = {0,0,0,0,0,0};
     //--------------------- PILS ------------------------------/
@@ -37,7 +39,6 @@ public class ModelToBody25 : MonoBehaviour
                 renderballs[i] = Myballs[i].GetComponent<MeshRenderer>();
                 renderballs[i].enabled = false;
         }
-        
     }
 
     private int ratioCol(int [,] tab, int col){
@@ -50,10 +51,9 @@ public class ModelToBody25 : MonoBehaviour
         return sum;
     }
 
-    private string Update()
+    private  void Update()
     {
         bool there_is_an_error = false;
-        bool we_refresh = false;
 
         if (isVisible_textBox.text != "full body not visible"){
             globalCounter +=1;
@@ -66,12 +66,15 @@ public class ModelToBody25 : MonoBehaviour
                 }
                 else if (EvaluateAngle.PointScore[i,0] < 0.7) // il y a une erreur
                 {
+                    moyPointScore[i,0] += 1;
+                    moyPointScore[i,1] = (int) ((100*moyPointScore[i,0]) / globalCounter);
                     there_is_an_error = true;
 
                     errorCounter[i,globalCounter%errorCounter.GetLength(1)] = 1;
                     
                     //mise à jour affichage
                     if(globalCounter%40==0){
+                        UnityEngine.Debug.Log(moyPointScore[i,1]);
                         if (ratioCol(errorCounter, i) > 50) {       //>50%
                             UnityEngine.Debug.Log("in ERROR");
                             if (written[i] == 0) { //affectation du niveau de priorité
@@ -80,12 +83,18 @@ public class ModelToBody25 : MonoBehaviour
                             if (written.Max() == written[i]) { //vérification de la priorité
                                 error_textbox.text = messages[i] + advices[i, (int) EvaluateAngle.PointScore[i,1]];
                                 UnityEngine.Debug.Log(EvaluateAngle.PointScore[i,1].ToString());
-                                we_refresh = true;
+
+                                //update stat
+                                StaticItems.ErrorMessage = messages[i] + advices[i, (int) EvaluateAngle.PointScore[i,1]];
+                                StaticItems.ErrorTime = DateTime.Now.ToString();
                             }
                         }
                     }
                     renderballs[i].enabled = true;
-                    renderballs[i].material.color = new Color(1 - EvaluateAngle.PointScore[i,0], 0, 0, 1);
+                    if (EvaluateAngle.PointScore[i,1] == 1) // angle trop grand -> rouge
+                        renderballs[i].material.color = new Color(1 - EvaluateAngle.PointScore[i,0], 0, 0, 1);
+                    else
+                        renderballs[i].material.color = new Color(0, 0, 1 - EvaluateAngle.PointScore[i,0], 1);
                 }
                 else // cas où il n'y a pas d'erreur
                 {
@@ -99,11 +108,5 @@ public class ModelToBody25 : MonoBehaviour
             } 
         }
 
-        if (we_refresh){
-            return error_textbox.text;
-        }
-        else{
-            return "";
-        }
     }
 }

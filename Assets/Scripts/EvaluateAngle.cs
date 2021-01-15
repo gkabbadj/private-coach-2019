@@ -58,6 +58,17 @@ using UnityEngine.UI;
             return angleSin;
         }
 
+        public static float Compute_angle(float angleSin, float angleCos){
+            float angle = 0;
+            if (angleSin>=0){
+                angle = Mathf.Acos(angleCos);
+            }
+            else{
+                angle = Mathf.PI + Mathf.Acos(angleCos);
+            }
+            return angle;
+        }
+
         public static void Compute_OP_PseudoAngle(List<RectTransform> poseJoints)
         {
              for(int i = 0; i < 6 ; i++)
@@ -112,12 +123,23 @@ using UnityEngine.UI;
             {
                 if (!((OP_Cos[i]==0) && (OP_Sin[i]==0)))
                 {
-                    PointScore[i,0] = (1 - Mathf.Abs((OP_Cos[i] - Ref_Cos[i] + OP_Sin[i] - Ref_Sin[i]) / 2f));
-                    if (OP_Cos[i] - Ref_Cos[i] > 0){
-                        PointScore[i,1] = 0; //angle utilisateur trop petit/fermé
-                    } else {
+                    // PointScore[i,0] = (1 - Mathf.Abs((OP_Cos[i] - Ref_Cos[i] + OP_Sin[i] - Ref_Sin[i]) / 2f));
+                    float OP_angle = Compute_angle(OP_Sin[i], OP_Cos[i]);
+                    float Ref_angle = Compute_angle(Ref_Sin[i], Ref_Cos[i]);
+                    PointScore[i,0] = Mathf.Abs(OP_angle - Ref_angle)/(2*Mathf.PI);
+
+                    // if (OP_Cos[i] - Ref_Cos[i] > 0){
+                    //     PointScore[i,1] = 0; //angle utilisateur trop petit/fermé
+                    // } else {
+                    //     PointScore[i,1] = 1; //angle utilisateur trop grand/ouvert
+                    // }
+                    if (OP_angle>Ref_angle){
                         PointScore[i,1] = 1; //angle utilisateur trop grand/ouvert
                     }
+                    else{
+                        PointScore[i,1] = 0;
+                    }
+
                     score += PointScore[i,0];
                     n += 1;
                 }
